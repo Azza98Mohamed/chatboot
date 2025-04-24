@@ -1,12 +1,13 @@
-"use client"; // Mark this as a client component
+'use client'; // Mark this as a client component
 
 import React, { useState } from 'react';
+import { Z_UNKNOWN } from 'zlib';
 
 function MoodleChatbot() {
   const [messages, setMessages] = useState([
     { role: 'assistant', content: 'Welcome to the Moodle Learning Assistant! How can I help you with your studies today?' }
   ]);
-  const [inputMessage, setInputMessage] = useState('');
+  const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const sendMessage = async () => {
