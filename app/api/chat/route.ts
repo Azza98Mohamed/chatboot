@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Définissez les types pour les messages
+// Types
 type MessageRole = 'user' | 'assistant' | 'system';
 type Message = {
   role: MessageRole;
@@ -13,53 +13,60 @@ type GeminiMessage = {
   parts: { text: string }[];
 };
 
-// Initialisation du client Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const ASSISTANT_NAMES = {
+  french: ['Léa', 'Thomas', 'Sophie', 'Nicolas', 'Camille'],
+  arabic: ['Youssef', 'Amina', 'Karim', 'Lina', 'Mehdi'],
+  english: ['Emma', 'John', 'Olivia', 'Michael', 'Sarah']
+};
 
 export async function POST(request: Request): Promise<NextResponse> {
-  // Validation du corps de la requête
-  let body: { messages?: Message[] };
+  // Vérification de la clé API
+  if (!process.env.GEMINI_API_KEY) {
+    return NextResponse.json(
+      { error: 'API key not configured' },
+      { status: 500 }
+    );
+  }
+
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+  // Extraction des données de la requête
+  let body: { messages?: Message[]; selectedLanguage?: string; sessionId?: string };
   try {
     body = await request.json();
     if (!body.messages || !Array.isArray(body.messages)) {
       throw new Error('Invalid request format');
     }
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Invalid request body' },
       { status: 400 }
     );
   }
 
-  const messages = body.messages;
-
-  const systemPrompt = `You are an AI learning assistant simulating a Moodle-like educational chatbot. 
-    Provide helpful, concise, and educational responses. 
-    Focus on:
-    - Answering study-related questions
-    - Explaining academic concepts
-    - Providing learning guidance
-    - Maintaining a professional and supportive tone
-  `;
+  const language = body.selectedLanguage?.toLowerCase() || 'français';
+  const sessionId = body.sessionId || 'default-session';
+  const assistantName = getDeterministicName(language, sessionId);
 
   try {
-    // Initialisation du modèle Gemini
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    const systemPrompt = buildSystemPrompt(language, assistantName);
 
-    // Conversion des messages pour Gemini avec typage strict
-    const chatHistory: GeminiMessage[] = [
-      { 
-        role: 'user', 
-        parts: [{ text: systemPrompt }] 
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-pro',
+      generationConfig: {
+        temperature: 0.7,
       },
-      ...messages.map((msg: Message): GeminiMessage => ({
+    });
+
+    const chatHistory: GeminiMessage[] = [
+      { role: 'user', parts: [{ text: systemPrompt }] },
+      ...body.messages.map((msg): GeminiMessage => ({
         role: msg.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: msg.content }],
       })),
     ];
 
-    // Validation du dernier message
-    const lastMessage = messages[messages.length - 1];
+    const lastMessage = body.messages[body.messages.length - 1];
     if (!lastMessage || lastMessage.role !== 'user') {
       return NextResponse.json(
         { error: 'Last message must be from user' },
@@ -67,28 +74,93 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    // Envoi de la requête à Gemini
-    const chat = model.startChat({
-      history: chatHistory,
-    });
-
+    const chat = model.startChat({ history: chatHistory });
     const result = await chat.sendMessage(lastMessage.content);
     const response = await result.response;
     const text = response.text();
 
     return NextResponse.json({
       role: 'assistant',
-      content: text,
+      content: formatResponse(text, language),
+      metadata: {
+        assistantName,
+        language
+      }
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error calling Gemini API:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to fetch response from Gemini API',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
+        language
       },
       { status: 500 }
     );
   }
+}
+
+// Helper functions
+function getDeterministicName(language: string, sessionId: string): string {
+  const names = language.includes('arabe') ? ASSISTANT_NAMES.arabic :
+                language.includes('anglais') ? ASSISTANT_NAMES.english :
+                ASSISTANT_NAMES.french;
+
+  const hash = Array.from(sessionId).reduce(
+    (acc, char) => acc + char.charCodeAt(0), 0);
+
+  return names[hash % names.length];
+}
+
+function buildSystemPrompt(language: string, name: string): string {
+  const prompts = {
+    french: `Vous êtes ${name}, assistant pédagogique Moodle. Règles strictes :
+1. Langue : Exclusivement français
+2. Comportement : Professionnel mais amical
+3. Contexte : Uniquement questions éducatives
+4. Structure : Réponses claires avec puces si nécessaire
+5. Jamais : Ne pas mentionner que vous êtes une IA`,
+
+    arabic: `أنت ${name}، مساعد تعليمي على منصة Moodle. قواعد صارمة:
+1. اللغة: العربية فقط
+2. السلوك: محترف ولكن ودود
+3. السياق: الأسئلة التعليمية فقط
+4. الهيكل: إجابات واضحة مع نقاط إذا لزم الأمر
+5. ممنوع: لا تذكر أنك برنامج ذكاء اصطناعي`,
+
+    english: `You are ${name}, Moodle educational assistant. Strict rules:
+1. Language: English only
+2. Behavior: Professional but friendly
+3. Context: Educational questions only
+4. Structure: Clear responses with bullet points if needed
+5. Never: Do not mention you're an AI`
+  };
+
+  return language.includes('arabe') ? prompts.arabic :
+         language.includes('anglais') ? prompts.english :
+         prompts.french;
+}
+
+function formatResponse(text: string, language: string): string {
+  let cleaned = text.trim();
+
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned.substring(3);
+    if (cleaned.endsWith('```')) {
+      cleaned = cleaned.substring(0, cleaned.length - 3);
+    }
+  }
+
+  const moodleReference = language.includes('arabe') ?
+    "حسب منصة Moodle: " :
+    language.includes('anglais') ?
+    "According to Moodle: " :
+    "Dans Moodle: ";
+
+  if (!cleaned.includes('Moodle') && !cleaned.includes('مودل')) {
+    cleaned = moodleReference + cleaned;
+  }
+
+  return cleaned;
 }
