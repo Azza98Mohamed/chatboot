@@ -162,62 +162,87 @@ function MoodleChatbot() {
       </div>
 
       <style jsx>{`
-        .moodle-chatbot {
-          width: 400px;
-          background-color: white;
-          border-radius: 10px;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-          overflow: hidden;
-        }
-        .chat-header {
-          background-color: #3f51b5;
-          color: white;
-          padding: 15px;
-          text-align: center;
-        }
-        .chat-messages {
-          height: 400px;
-          overflow-y: auto;
-          padding: 15px;
-        }
-        .message {
-          margin-bottom: 10px;
-          padding: 10px;
-          border-radius: 10px;
-          max-width: 80%;
-        }
-        .message.user {
-          background-color: #e6f2ff;
-          margin-left: auto;
-        }
-        .message.assistant {
-          background-color: #f0f0f0;
-        }
-        .chat-input {
-          display: flex;
-          padding: 15px;
-          background-color: #f0f0f0;
-        }
-        .chat-input input {
-          flex-grow: 1;
-          padding: 10px;
-          border: 1px solid #ddd;
-          border-radius: 5px;
-          margin-right: 10px;
-        }
-        .chat-input button {
-          background-color: #3f51b5;
-          color: white;
-          border: none;
-          padding: 10px 15px;
-          border-radius: 5px;
-          cursor: pointer;
-        }
-        .typing-indicator {
-          display: inline-block;
-          min-width: 20px;
-        }
-      `}</style>
+  .moodle-chatbot {
+    width: 100%;
+    height: 100%;
+    max-width: 400px;
+    max-height: 500px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+  }
+
+  .chat-header {
+    background-color: #3f51b5;
+    color: white;
+    padding: 8px 12px; /* Réduit le padding */
+    text-align: center;
+    flex-shrink: 0;
+    font-size: 14px; /* Texte plus petit */
+    font-weight: bold;
+  }
+
+  .chat-messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  .message {
+    margin-bottom: 8px;
+    padding: 8px;
+    border-radius: 8px;
+    max-width: 80%;
+    word-wrap: break-word;
+  }
+
+  .message.user {
+    background-color: #e6f2ff;
+    margin-left: auto;
+  }
+
+  .message.assistant {
+    background-color: #f0f0f0;
+  }
+
+  .chat-input {
+    display: flex;
+    padding: 8px; /* Réduction du padding */
+    background-color: #f0f0f0;
+    flex-shrink: 0;
+  }
+
+  .chat-input input {
+    flex-grow: 1;
+    padding: 6px 8px; /* Moins haut */
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-right: 8px;
+    font-size: 13px;
+  }
+
+  .chat-input button {
+    background-color: #3f51b5;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+
+  .typing-indicator {
+    display: inline-block;
+    min-width: 20px;
+    font-size: 12px;
+  }
+`}</style>
     </div>
   );
 }
