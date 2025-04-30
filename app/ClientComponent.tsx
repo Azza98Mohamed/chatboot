@@ -163,19 +163,12 @@ function MoodleChatbot() {
 
       <style jsx>{`
   .moodle-chatbot {
-    width: 100%;
-    height: 100%;
-    max-width: 400px;
-    max-height: 500px;
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-  }
+          width: 400px;
+          background-color: white;
+          border-radius: 10px;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+          overflow: hidden;
+        }
 
   .chat-header {
     background-color: #3f51b5;
