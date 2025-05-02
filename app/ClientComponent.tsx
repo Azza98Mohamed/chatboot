@@ -185,7 +185,7 @@ function MoodleChatbot() {
     overflow-y: auto;
     padding: 10px;
     font-size: 13px;
-    margin-bottom: 150px;
+    margin-bottom: 160px;
   }
 
   .message {
