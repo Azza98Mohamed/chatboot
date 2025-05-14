@@ -15,7 +15,7 @@ type GeminiMessage = {
 
 const ASSISTANT_NAMES = {
   french: ['Léa', 'Thomas', 'Sophie', 'Nicolas', 'Camille'],
-  arabic: ['Youssef', 'Amina', 'Karim', 'Lina', 'Mehdi'],
+  arabic: ['يوسف', 'امينة', 'كريم', 'مهدي'],
   english: ['Emma', 'John', 'Olivia', 'Michael', 'Sarah']
 };
 
@@ -52,7 +52,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const systemPrompt = buildSystemPrompt(language, assistantName);
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-pro',
+      model: 'gemini-1.5-flash',
       generationConfig: {
         temperature: 0.7,
       },
