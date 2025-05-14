@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 // Déplacez les noms ici pour qu'ils soient constants
 const ASSISTANT_NAMES = {
   french: ['Léa', 'Thomas', 'Sophie', 'Nicolas', 'Camille'],
-  arabic: ['Youssef', 'Amina', 'Karim', 'Lina', 'Mehdi'],
+  arabic: ['يوسف', 'امينة', 'كريم', 'مهدي'],
   english: ['Emma', 'John', 'Olivia', 'Michael', 'Sarah']
 };
 
