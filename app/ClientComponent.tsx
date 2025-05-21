@@ -193,7 +193,7 @@ function MoodleChatbot() {
       <style jsx>{`
         .moodle-chatbot {
           width: 400px;
-          height: 300px; /* ou 100%, selon usage */
+          height: 400px; /* ou 100%, selon usage */
           background-color: white;
           border-radius: 10px;
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
