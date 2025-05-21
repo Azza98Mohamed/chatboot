@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 // Noms constants selon la langue
 const ASSISTANT_NAMES = {
@@ -10,20 +10,35 @@ const ASSISTANT_NAMES = {
 
 function MoodleChatbot() {
   const [initialized, setInitialized] = useState(false);
-  const [messages, setMessages] = useState<{role: string, content: string}[]>([]);
+  const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [typingDots, setTypingDots] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
   const [assistantName, setAssistantName] = useState('Léa'); // Valeur par défaut
 
+  // Ref pour gérer le scroll automatique
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Fonction pour scroller en bas de la liste des messages
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Scroll automatique à chaque fois que les messages changent
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   // Initialisation après le montage
   useEffect(() => {
     if (!initialized) {
-      setMessages([{
-        role: 'assistant', 
-        content: `Bonjour ! Je suis ${assistantName}, votre assistante pédagogique. Quelle langue souhaitez-vous utiliser ? [Français/Arabe/Anglais]`
-      }]);
+      setMessages([
+        {
+          role: 'assistant',
+          content: `Bonjour ! Je suis ${assistantName}, votre assistante pédagogique. Quelle langue souhaitez-vous utiliser ? [Français/Arabe/Anglais]`
+        }
+      ]);
       setInitialized(true);
     }
   }, [initialized, assistantName]);
@@ -36,7 +51,7 @@ function MoodleChatbot() {
     }
 
     const interval = setInterval(() => {
-      setTypingDots(prev => prev.length >= 3 ? '' : prev + '.');
+      setTypingDots((prev) => (prev.length >= 3 ? '' : prev + '.'));
     }, 200);
 
     return () => clearInterval(interval);
@@ -45,23 +60,32 @@ function MoodleChatbot() {
   const handleLanguageSelection = (language: string) => {
     const lang = language.toLowerCase();
     setSelectedLanguage(lang);
-    
+
     // Choisir un nom selon la langue
-    const names = lang.includes('arabe') ? ASSISTANT_NAMES.arabic :
-                  lang.includes('anglais') ? ASSISTANT_NAMES.english : 
-                  ASSISTANT_NAMES.french;
-    
+    const names = lang.includes('arabe')
+      ? ASSISTANT_NAMES.arabic
+      : lang.includes('anglais')
+      ? ASSISTANT_NAMES.english
+      : ASSISTANT_NAMES.french;
+
     const newName = names[Math.floor(Math.random() * names.length)];
     setAssistantName(newName);
 
     let response = '';
-    switch(lang) {
-      case 'français': response = `Parfait ${newName} ! Comment puis-je vous aider aujourd'hui ?`; break;
-      case 'arabe': response = `!${newName} حسنا كيف يمكنني مساعدتك اليوم`; break;
-      case 'anglais': response = `Great ${newName}! How can I help you today?`; break;
+    switch (lang) {
+      case 'français':
+        response = `Parfait ${newName} ! Comment puis-je vous aider aujourd'hui ?`;
+        break;
+      case 'arabe':
+        response = `!${newName} حسنا كيف يمكنني مساعدتك اليوم`;
+        break;
+      case 'anglais':
+        response = `Great ${newName}! How can I help you today?`;
+        break;
     }
 
-    setMessages(prev => [...prev, 
+    setMessages((prev) => [
+      ...prev,
       { role: 'user', content: language },
       { role: 'assistant', content: response }
     ]);
@@ -89,8 +113,8 @@ function MoodleChatbot() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ 
-          messages: updatedMessages,  // Envoi de tout l’historique pour garder le contexte
+        body: JSON.stringify({
+          messages: updatedMessages, // Envoi de tout l’historique pour garder le contexte
           selectedLanguage
         })
       });
@@ -98,20 +122,26 @@ function MoodleChatbot() {
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: data.content || data.response || 'No response content' 
-      }]);
-      
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: data.content || data.response || 'No response content'
+        }
+      ]);
     } catch (error) {
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: selectedLanguage === 'français' 
-          ? 'Désolé, une erreur est survenue. Veuillez réessayer.' 
-          : selectedLanguage === 'arabe' 
-            ? 'عذرا، حدث خطأ. يرجى المحاولة مرة أخرى'
-            : 'Sorry, I encountered an error. Please try again.'
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content:
+            selectedLanguage === 'français'
+              ? 'Désolé, une erreur est survenue. Veuillez réessayer.'
+              : selectedLanguage === 'arabe'
+              ? 'عذرا، حدث خطأ. يرجى المحاولة مرة أخرى'
+              : 'Sorry, I encountered an error. Please try again.'
+        }
+      ]);
       console.error('Chat error:', error);
     } finally {
       setIsLoading(false);
@@ -135,6 +165,8 @@ function MoodleChatbot() {
               <span className="typing-indicator">{typingDots}</span>
             </div>
           )}
+          {/* Élément vide pour le scroll */}
+          <div ref={messagesEndRef} />
         </div>
         <div className="chat-input">
           <input
@@ -143,21 +175,17 @@ function MoodleChatbot() {
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
             placeholder={
-              !selectedLanguage 
-                ? "Choisissez une langue..." 
+              !selectedLanguage
+                ? 'Choisissez une langue...'
                 : selectedLanguage === 'français'
-                  ? "Posez votre question..."
-                  : selectedLanguage === 'arabe'
-                    ? "اطرح سؤالك..."
-                    : "Ask your question..."
-            } 
+                ? 'Posez votre question...'
+                : selectedLanguage === 'arabe'
+                ? 'اطرح سؤالك...'
+                : 'Ask your question...'
+            }
           />
           <button onClick={sendMessage} disabled={isLoading}>
-            {selectedLanguage === 'français' 
-              ? 'Envoyer' 
-              : selectedLanguage === 'arabe'
-                ? 'إرسال'
-                : 'Send'}
+            {selectedLanguage === 'français' ? 'Envoyer' : selectedLanguage === 'arabe' ? 'إرسال' : 'Send'}
           </button>
         </div>
       </div>
@@ -168,7 +196,7 @@ function MoodleChatbot() {
           height: 500px; /* ou 100%, selon usage */
           background-color: white;
           border-radius: 10px;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
           display: flex;
           flex-direction: column;
           overflow: hidden;
