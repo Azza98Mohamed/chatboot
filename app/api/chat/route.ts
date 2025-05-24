@@ -152,15 +152,5 @@ function formatResponse(text: string, language: string): string {
     }
   }
 
-  const moodleReference = language.includes('arabe') ?
-    "حسب منصة Moodle: " :
-    language.includes('anglais') ?
-    "According to Moodle: " :
-    "Dans Moodle: ";
-
-  if (!cleaned.includes('Moodle') && !cleaned.includes('مودل')) {
-    cleaned = moodleReference + cleaned;
-  }
-
   return cleaned;
 }
